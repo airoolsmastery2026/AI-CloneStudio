@@ -60,7 +60,7 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         id: '102', 
         title: 'Cyberpunk City Flythrough', 
         thumbnail: 'https://images.unsplash.com/photo-1515630278258-407f66498911?w=800&q=80',
-        videoUrl: 'https://cdn.coverr.co/videos/coverr-driving-through-a-city-at-night-4546/1080p.mp4', // Real sample video
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', 
         status: ProjectStatus.COMPLETED, 
         progress: 100, 
         engine: 'Sora2', 
@@ -71,7 +71,7 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         id: '103', 
         title: 'Nature Documentary Style', 
         thumbnail: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80',
-        videoUrl: 'https://cdn.coverr.co/videos/coverr-foggy-pine-forest-4552/1080p.mp4', // Real sample video
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         status: ProjectStatus.COMPLETED, 
         progress: 100, 
         engine: 'KlingAI', 
@@ -226,7 +226,7 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
               status: isFinished ? ProjectStatus.COMPLETED : ProjectStatus.GENERATING,
               duration: isFinished ? '0:15' : p.duration,
               // Fallback video for generated content
-              videoUrl: isFinished && !p.videoUrl ? 'https://cdn.coverr.co/videos/coverr-abstract-purple-and-blue-lights-4560/1080p.mp4' : p.videoUrl
+              videoUrl: isFinished && !p.videoUrl ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' : p.videoUrl
             };
           }
           return p;

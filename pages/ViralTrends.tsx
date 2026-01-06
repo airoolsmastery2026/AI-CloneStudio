@@ -24,7 +24,7 @@ const ViralTrends: React.FC<ViralTrendsProps> = ({ lang }) => {
       platform: 'TikTok', 
       description: 'Tech review format with fast cuts.', 
       url: 'https://tiktok.com/ai-gadgets',
-      videoUrl: 'https://cdn.coverr.co/videos/coverr-driving-through-a-city-at-night-4546/1080p.mp4',
+      videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       growth: '+120% / hr'
     },
     { 
@@ -36,7 +36,7 @@ const ViralTrends: React.FC<ViralTrendsProps> = ({ lang }) => {
       platform: 'YouTube', 
       description: 'Cinematic B-roll with deep voiceover.', 
       url: 'https://youtube.com/travel-vlog',
-      videoUrl: 'https://cdn.coverr.co/videos/coverr-foggy-pine-forest-4552/1080p.mp4',
+      videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
       growth: '+45% / hr'
     },
     { 
@@ -48,7 +48,7 @@ const ViralTrends: React.FC<ViralTrendsProps> = ({ lang }) => {
       platform: 'Facebook', 
       description: 'Satisfying visual loop.', 
       url: 'https://facebook.com/lights',
-      videoUrl: 'https://cdn.coverr.co/videos/coverr-abstract-purple-and-blue-lights-4560/1080p.mp4',
+      videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
       growth: '+15% / hr'
     },
     { 
@@ -60,7 +60,7 @@ const ViralTrends: React.FC<ViralTrendsProps> = ({ lang }) => {
       platform: 'TikTok', 
       description: 'Atmospheric walking tour.', 
       url: 'https://tiktok.com/cyberpunk',
-      videoUrl: 'https://cdn.coverr.co/videos/coverr-walking-in-a-cyberpunk-city-4547/1080p.mp4',
+      videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
       growth: '+200% / hr'
     },
   ]);
@@ -99,7 +99,7 @@ const ViralTrends: React.FC<ViralTrendsProps> = ({ lang }) => {
         platform: 'TikTok',
         description: 'Emerging trend identified by Grok.',
         url: 'https://tiktok.com/new-trend',
-        videoUrl: 'https://cdn.coverr.co/videos/coverr-walking-in-a-cyberpunk-city-4547/1080p.mp4',
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         growth: '+500% / hr'
       };
       
