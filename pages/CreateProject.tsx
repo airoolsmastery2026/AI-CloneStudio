@@ -1,55 +1,36 @@
+
 import React, { useState, useRef } from 'react';
-import { Language, ProjectStatus, VideoProject } from '../types';
-import { Link, Upload, Youtube, Instagram, Facebook, Wand2, ArrowRight, Languages, Check, Layers, FileVideo } from 'lucide-react';
+import { Language, ProjectStatus, VideoProject, TargetContentLanguage } from '../types';
+import { Link, Upload, Youtube, Instagram, Facebook, Wand2, ArrowRight, Globe, Check, Layers, FileVideo } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStudio } from '../context/StudioContext';
+import { translations } from '../translations';
 
-interface CreateProjectProps {
-  lang: Language;
-}
-
-const CreateProject: React.FC<CreateProjectProps> = ({ lang }) => {
+const CreateProject: React.FC<{ lang: Language }> = ({ lang }) => {
   const navigate = useNavigate();
   const { addProject, addBatch } = useStudio();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const t = translations[lang].create;
   
   const [inputMode, setInputMode] = useState<'url' | 'upload'>('url');
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [model, setModel] = useState<'Veo3' | 'Sora2' | 'KlingAI' | 'Grok'>('Veo3');
   
   const [urlInput, setUrlInput] = useState('');
-  const [contentLang, setContentLang] = useState<string>('Auto');
+  const [targetLang, setTargetLang] = useState<TargetContentLanguage>(lang === 'VN' ? 'Tiếng Việt' : 'Tiếng Anh');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // File upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const models = [
-    { id: 'Veo3', name: 'Veo 3', desc: 'High fidelity realistic generation' },
-    { id: 'Sora2', name: 'Sora 2', desc: 'Cinematic quality & motion' },
-    { id: 'KlingAI', name: 'Kling AI', desc: 'Portrait & Character focus' },
-    { id: 'Grok', name: 'Grok', desc: 'Viral trend optimized' },
+  const languageOptions: { name: TargetContentLanguage, flag: string }[] = [
+    { name: 'Tiếng Việt', flag: '🇻🇳' },
+    { name: 'Tiếng Anh', flag: '🇺🇸' },
+    { name: 'Tiếng Nhật', flag: '🇯🇵' },
+    { name: 'Tiếng Hàn', flag: '🇰🇷' },
+    { name: 'Tiếng Trung', flag: '🇨🇳' },
+    { name: 'Tiếng Pháp', flag: '🇫🇷' },
+    { name: 'Tiếng Tây Ban Nha', flag: '🇪🇸' },
   ];
-
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      if (isBatchMode) {
-        // Batch Mode: Add all
-        setSelectedFiles(Array.from(e.target.files));
-        setPreviewUrl(null); 
-      } else {
-        // Single Mode: Take first
-        const file = e.target.files[0];
-        setSelectedFiles([file]);
-        setPreviewUrl(URL.createObjectURL(file));
-      }
-    }
-  };
 
   const handleStart = () => {
     if (inputMode === 'url' && !urlInput) return;
@@ -57,31 +38,23 @@ const CreateProject: React.FC<CreateProjectProps> = ({ lang }) => {
 
     setIsSubmitting(true);
 
-    // BATCH MODE LOGIC
     if (isBatchMode) {
-        const batchName = inputMode === 'url' ? 'URL Batch Import' : `Bulk Upload (${selectedFiles.length} files)`;
-        const count = inputMode === 'url' ? 10 : selectedFiles.length; // Mock count for URL batch
-        
-        setTimeout(() => {
-            addBatch(batchName, count, model);
-            navigate('/mass-production');
-        }, 800);
+        const batchName = inputMode === 'url' ? 'Batch URL Import' : `Batch Upload (${selectedFiles.length})`;
+        addBatch(batchName, selectedFiles.length || 10, model);
+        setTimeout(() => navigate('/mass-production'), 800);
         return;
     }
 
-    // SINGLE MODE LOGIC
     const newProject: VideoProject = {
       id: Date.now().toString(),
-      title: inputMode === 'url' 
-        ? 'Imported Project ' + Date.now().toString().slice(-4) 
-        : (selectedFiles[0]?.name || 'Upload Project'),
+      title: inputMode === 'url' ? 'Project ' + Date.now().toString().slice(-4) : selectedFiles[0]?.name,
       thumbnail: 'https://picsum.photos/400/225?random=' + Date.now(),
-      videoUrl: inputMode === 'upload' && previewUrl ? previewUrl : undefined,
       status: ProjectStatus.QUEUED,
       progress: 0,
       engine: model as any,
-      date: 'Just now',
-      sourceUrl: inputMode === 'url' ? urlInput : undefined
+      date: lang === 'VN' ? 'Vừa xong' : 'Just now',
+      sourceUrl: inputMode === 'url' ? urlInput : undefined,
+      targetLanguage: targetLang
     };
 
     setTimeout(() => {
@@ -92,188 +65,110 @@ const CreateProject: React.FC<CreateProjectProps> = ({ lang }) => {
 
   return (
     <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500 pb-20">
-      <header className="mb-8">
-        <h2 className="text-3xl font-display font-bold text-white mb-2">
-          {lang === 'EN' ? 'Start New Project' : 'Bắt đầu dự án mới'}
-        </h2>
-        <p className="text-gray-400">
-          {lang === 'EN' ? 'Choose your input source and AI engine.' : 'Chọn nguồn nhập và công cụ AI.'}
-        </p>
+      <header className="mb-8 text-center">
+        <h2 className="text-4xl font-display font-bold text-white mb-3">{t.title}</h2>
+        <p className="text-gray-400">{t.desc}</p>
       </header>
 
-      {/* Mode Switcher (Single vs Batch) */}
-      <div className="flex justify-center mb-8">
-         <div className="bg-studio-900 p-1 rounded-xl inline-flex border border-white/10">
-            <button 
-              onClick={() => setIsBatchMode(false)}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${!isBatchMode ? 'bg-white text-black shadow' : 'text-gray-400 hover:text-white'}`}
-            >
-               <FileVideo size={16} /> {lang === 'EN' ? 'Single Video' : 'Video Lẻ'}
+      <div className="flex justify-center mb-10">
+         <div className="bg-studio-900 p-1.5 rounded-2xl inline-flex border border-white/10 shadow-2xl">
+            <button onClick={() => setIsBatchMode(false)} className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${!isBatchMode ? 'bg-white text-black shadow-xl' : 'text-gray-400 hover:text-white'}`}>
+               <FileVideo size={18} /> {t.single_video}
             </button>
-            <button 
-              onClick={() => setIsBatchMode(true)}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${isBatchMode ? 'bg-studio-accent text-white shadow' : 'text-gray-400 hover:text-white'}`}
-            >
-               <Layers size={16} /> {lang === 'EN' ? 'Batch / Bulk' : 'Hàng loạt'}
+            <button onClick={() => setIsBatchMode(true)} className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${isBatchMode ? 'bg-studio-accent text-white shadow-xl' : 'text-gray-400 hover:text-white'}`}>
+               <Layers size={18} /> {t.batch_video}
             </button>
          </div>
       </div>
 
-      <div className="glass-panel rounded-2xl overflow-hidden border border-white/5">
-        <div className="flex border-b border-white/5">
-          <button 
-            onClick={() => setInputMode('url')}
-            className={`flex-1 py-4 text-center text-sm font-bold transition-colors border-b-2 ${inputMode === 'url' ? 'border-studio-accent text-white bg-white/5' : 'border-transparent text-gray-500 hover:text-white'}`}
-          >
-             <div className="flex items-center justify-center gap-2"><Link size={18} /> URL Import</div>
-          </button>
-          <button 
-            onClick={() => setInputMode('upload')}
-            className={`flex-1 py-4 text-center text-sm font-bold transition-colors border-b-2 ${inputMode === 'upload' ? 'border-studio-accent text-white bg-white/5' : 'border-transparent text-gray-500 hover:text-white'}`}
-          >
-             <div className="flex items-center justify-center gap-2"><Upload size={18} /> File Upload</div>
-          </button>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+            <div className="glass-panel rounded-3xl overflow-hidden border border-white/5">
+                <div className="flex border-b border-white/5">
+                    <button onClick={() => setInputMode('url')} className={`flex-1 py-4 text-sm font-bold transition-all flex items-center justify-center gap-2 ${inputMode === 'url' ? 'bg-white/5 text-white border-b-2 border-studio-accent' : 'text-gray-500 hover:text-white'}`}>
+                        <Link size={18} /> {t.import_link}
+                    </button>
+                    <button onClick={() => setInputMode('upload')} className={`flex-1 py-4 text-sm font-bold transition-all flex items-center justify-center gap-2 ${inputMode === 'upload' ? 'bg-white/5 text-white border-b-2 border-studio-accent' : 'text-gray-500 hover:text-white'}`}>
+                        <Upload size={18} /> {t.upload_file}
+                    </button>
+                </div>
 
-        <div className="p-8">
-          {inputMode === 'url' ? (
-            <div className="space-y-6">
-               <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    {isBatchMode ? (lang === 'EN' ? 'Channel or Playlist URL' : 'URL Kênh hoặc Playlist') : (lang === 'EN' ? 'Video URL' : 'URL Video')}
-                  </label>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      placeholder={isBatchMode ? "https://youtube.com/@channel/videos" : "https://youtube.com/watch?v=..."}
-                      className="w-full bg-studio-900 border border-gray-700 rounded-xl py-4 px-5 text-white focus:outline-none focus:border-studio-accent focus:ring-1 focus:ring-studio-accent transition-all placeholder:text-gray-600"
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2 text-gray-500">
-                      <Youtube size={20} />
-                      <Instagram size={20} />
-                      <Facebook size={20} />
-                    </div>
-                  </div>
-                  {isBatchMode && (
-                     <div className="mt-2 text-xs text-yellow-400 flex items-center gap-1">
-                        <Layers size={12} />
-                        {lang === 'EN' ? 'AI will auto-select top trending videos from this source.' : 'AI sẽ tự động chọn video xu hướng hàng đầu từ nguồn này.'}
-                     </div>
-                  )}
-               </div>
-            </div>
-          ) : (
-            <div 
-              onClick={handleFileClick}
-              className={`border-2 border-dashed rounded-xl p-12 flex flex-col items-center justify-center transition-all cursor-pointer bg-studio-900/50 group ${selectedFiles.length > 0 ? 'border-studio-success bg-studio-success/5' : 'border-gray-700 hover:border-studio-accent hover:bg-studio-accent/5'}`}
-            >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                multiple={isBatchMode}
-                accept="video/mp4,video/mov,video/quicktime"
-              />
-              
-              {selectedFiles.length > 0 ? (
-                 <div className="text-center">
-                    <div className="w-16 h-16 bg-studio-success rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg shadow-green-500/20">
-                      <Check size={32} className="text-white" />
-                    </div>
-                    {isBatchMode ? (
-                        <div>
-                            <h3 className="text-lg font-bold text-white mb-1">{selectedFiles.length} files selected</h3>
-                            <p className="text-sm text-gray-400">Ready for mass analysis</p>
+                <div className="p-8">
+                    {inputMode === 'url' ? (
+                        <div className="relative">
+                            <input type="text" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder={t.placeholder_url} className="w-full bg-studio-900 border border-gray-800 rounded-2xl py-5 px-6 text-white focus:ring-2 focus:ring-studio-accent outline-none transition-all placeholder:text-gray-600 shadow-inner" />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-3 text-gray-600 opacity-50">
+                                <Youtube size={20} /> <Instagram size={20} /> <Facebook size={20} />
+                            </div>
                         </div>
                     ) : (
-                        <div>
-                            <h3 className="text-lg font-bold text-white mb-1">{selectedFiles[0].name}</h3>
-                            <p className="text-sm text-gray-400">{(selectedFiles[0].size / (1024*1024)).toFixed(2)} MB</p>
+                        <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-800 rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-studio-accent/5 hover:border-studio-accent transition-all group">
+                            <input type="file" ref={fileInputRef} className="hidden" multiple={isBatchMode} onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))} />
+                            {selectedFiles.length > 0 ? (
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-studio-success/20 text-studio-success rounded-full flex items-center justify-center mb-4 mx-auto"><Check size={32} /></div>
+                                    <p className="text-white font-bold">{selectedFiles.length} tệp đã chọn</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="w-16 h-16 bg-studio-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Upload size={32} className="text-gray-500" /></div>
+                                    <p className="text-white font-bold mb-1">{t.upload_desc}</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-widest">{t.support_format}</p>
+                                </>
+                            )}
                         </div>
                     )}
-                    <p className="text-xs text-studio-accent mt-4 font-bold uppercase tracking-wider group-hover:underline">Click to change</p>
-                 </div>
-              ) : (
-                <>
-                  <div className="w-16 h-16 bg-studio-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    {isBatchMode ? <Layers size={32} className="text-gray-400 group-hover:text-white" /> : <Upload size={32} className="text-gray-400 group-hover:text-white" />}
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-1">
-                    {lang === 'EN' ? (isBatchMode ? 'Bulk Upload (Max 50)' : 'Click to Upload') : (isBatchMode ? 'Tải hàng loạt (Tối đa 50)' : 'Nhấn để tải lên')}
-                  </h3>
-                  <p className="text-sm text-gray-500 text-center max-w-xs">
-                    MP4, MOV supported.
-                  </p>
-                </>
-              )}
+                </div>
             </div>
-          )}
 
-          {/* Content Language Selection */}
-          <div className="mt-6 pt-6 border-t border-white/5">
-             <label className="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
-                <Languages size={16} />
-                {lang === 'EN' ? 'Target Content Language' : 'Ngôn ngữ nội dung mục tiêu'}
-             </label>
-             <div className="flex gap-3 flex-wrap">
-                {['Auto', 'English', 'Vietnamese', 'Japanese', 'Spanish'].map(l => (
-                  <button
-                    key={l}
-                    onClick={() => setContentLang(l)}
-                    className={`px-4 py-2 rounded-lg text-sm border transition-colors ${contentLang === l ? 'bg-studio-accent border-studio-accent text-white' : 'border-white/10 text-gray-400 hover:border-white/30 bg-studio-900'}`}
-                  >
-                    {l}
-                  </button>
-                ))}
-             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-           <Wand2 size={20} className="text-studio-neon" />
-           {lang === 'EN' ? 'Select AI Engine' : 'Chọn Công cụ AI'}
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {models.map((m) => (
-            <div 
-              key={m.id}
-              onClick={() => setModel(m.id as any)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all relative overflow-hidden group ${
-                model === m.id 
-                  ? 'bg-studio-accent/10 border-studio-accent' 
-                  : 'bg-studio-800/50 border-white/5 hover:border-white/20'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-bold text-white group-hover:text-studio-accent transition-colors">{m.name}</span>
-                {model === m.id && <div className="w-3 h-3 bg-studio-accent rounded-full shadow-[0_0_10px_rgba(99,102,241,0.8)]"></div>}
-              </div>
-              <p className="text-xs text-gray-400 leading-relaxed">{m.desc}</p>
+            <div className="glass-panel p-8 rounded-3xl border border-white/5">
+                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><Globe size={20} className="text-studio-accent" /> {t.target_lang}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {languageOptions.map(l => (
+                        <button key={l.name} onClick={() => setTargetLang(l.name)} className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${targetLang === l.name ? 'bg-studio-accent border-studio-accent text-white shadow-lg shadow-indigo-500/20' : 'bg-studio-900 border-white/10 text-gray-400 hover:border-white/30'}`}>
+                            <span className="text-lg">{l.flag}</span> {l.name}
+                        </button>
+                    ))}
+                </div>
             </div>
-          ))}
         </div>
-      </div>
 
-      <div className="flex justify-end pb-10">
-        <button 
-          onClick={handleStart}
-          disabled={isSubmitting || (inputMode === 'url' && !urlInput) || (inputMode === 'upload' && selectedFiles.length === 0)}
-          className="bg-gradient-to-r from-studio-accent to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl shadow-indigo-900/40 flex items-center gap-2 transform transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-           {isSubmitting ? (
-             <span className="animate-pulse flex items-center gap-2"><Layers size={20} className="animate-bounce" /> {isBatchMode ? 'Queuing Batch...' : 'Analyzing...'}</span>
-           ) : (
-             <>
-               {isBatchMode ? (lang === 'EN' ? 'Start Batch Production' : 'Bắt đầu SX Hàng loạt') : (lang === 'EN' ? 'Start Generation' : 'Bắt đầu Tạo')}
-               <ArrowRight size={20} />
-             </>
-           )}
-        </button>
+        <div className="space-y-6">
+            <div className="glass-panel p-6 rounded-3xl border border-white/5">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><Wand2 size={20} className="text-studio-neon" /> {t.ai_engine}</h3>
+                <div className="space-y-3">
+                    {[
+                      { id: 'Veo3', name: 'Veo 3', desc: lang === 'VN' ? 'Siêu thực tế' : 'Hyper realistic' },
+                      { id: 'Sora2', name: 'Sora 2', desc: lang === 'VN' ? 'Điện ảnh' : 'Cinematic' },
+                      { id: 'KlingAI', name: 'Kling AI', desc: lang === 'VN' ? 'Nhân vật' : 'Characters' },
+                      { id: 'Grok', name: 'Grok', desc: lang === 'VN' ? 'Xử lý Viral' : 'Viral processing' },
+                    ].map(m => (
+                        <div key={m.id} onClick={() => setModel(m.id as any)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${model === m.id ? 'bg-studio-accent/10 border-studio-accent shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-studio-900 border-white/5 hover:border-white/20'}`}>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className={`font-bold ${model === m.id ? 'text-studio-accent' : 'text-white'}`}>{m.name}</span>
+                                {model === m.id && <Check size={14} className="text-studio-accent" />}
+                            </div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-tight">{m.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button onClick={handleStart} disabled={isSubmitting} className="w-full bg-gradient-to-br from-studio-accent to-purple-600 hover:from-studio-accentHover hover:to-purple-500 text-white p-6 rounded-3xl font-bold text-xl shadow-2xl flex flex-col items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50">
+                {isSubmitting ? (
+                    <span className="flex items-center gap-3 animate-pulse">
+                        <Layers className="animate-bounce" /> {t.preparing}
+                    </span>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-2">
+                            {t.start_btn} <ArrowRight size={20} />
+                        </div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] opacity-60">Neural Rendering Active</span>
+                    </>
+                )}
+            </button>
+        </div>
       </div>
     </div>
   );

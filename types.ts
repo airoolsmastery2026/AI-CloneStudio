@@ -1,27 +1,22 @@
+
 export type Language = 'EN' | 'VN';
 
+export type TargetContentLanguage = 'Tiếng Việt' | 'Tiếng Anh' | 'Tiếng Nhật' | 'Tiếng Hàn' | 'Tiếng Trung' | 'Tiếng Pháp' | 'Tiếng Tây Ban Nha';
+
 export enum ProjectStatus {
-  QUEUED = 'Queued',
-  ANALYZING = 'Analyzing',
-  WRITING = 'Writing Script',
-  PROMPTING = 'Optimizing Prompt',
-  GENERATING = 'Generating',
-  COMPLETED = 'Completed',
-  FAILED = 'Failed'
+  QUEUED = 'QUEUED',
+  ANALYZING = 'ANALYZING',
+  WRITING = 'WRITING',
+  PROMPTING = 'PROMPTING',
+  GENERATING = 'GENERATING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED'
 }
 
 export interface ScriptStructure {
   hook: string;
   body: string;
   cta: string;
-}
-
-export interface VoiceConfig {
-  id: string;
-  name: string;
-  gender: 'Male' | 'Female';
-  style: 'News' | 'Story' | 'Hype' | 'Calm';
-  lang: Language;
 }
 
 export interface VideoProject {
@@ -34,13 +29,24 @@ export interface VideoProject {
   engine: 'Veo3' | 'Sora2' | 'KlingAI' | 'Grok';
   date: string;
   sourceUrl?: string;
-  script?: string; // Legacy string support
-  scriptStructure?: ScriptStructure; // New structured support
+  script?: string;
+  scriptStructure?: ScriptStructure;
   optimizedPrompt?: string;
-  viralHooks?: string[];
+  targetLanguage: TargetContentLanguage;
   duration?: string;
   voiceId?: string;
-  referenceImage?: string; // URL for style cloning
+}
+
+export type BatchTemplateId = 'gameplay_split' | 'fake_podcast' | 'cinematic_story' | 'news_flash';
+
+export interface BatchJob {
+  id: string;
+  name: string;
+  totalVideos: number;
+  processedVideos: number;
+  status: 'Đang xử lý' | 'Đã tạm dừng' | 'Đã hoàn thành';
+  engine: 'Veo3' | 'Sora2' | 'KlingAI' | 'Grok';
+  template?: BatchTemplateId;
 }
 
 export interface ViralVideo {
@@ -65,28 +71,19 @@ export interface Notification {
 }
 
 export interface UserSettings {
-  // API & Connections
   veoKey: string;
   soraKey: string;
   klingKey: string;
   grokKey: string;
-  
-  // Interface
   uiTheme: 'matte' | 'metallic' | 'multipolar';
   contentLanguage: Language | 'Auto';
-  
-  // Render Configuration
-  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '21:9';
+  defaultAspectRatio: '16:9' | '9:16' | '1:1';
   defaultResolution: '720p' | '1080p' | '2K' | '4K';
-  defaultFrameRate: '24fps' | '30fps' | '60fps';
-  outputFormat: 'MP4' | 'MOV' | 'WEBM';
-  renderQuality: 'Draft' | 'Standard' | 'High' | 'Ultra';
-  
-  // AI Behavior
-  creativityLevel: number; // 0.0 to 1.0
+  defaultFrameRate: '30fps' | '60fps';
+  outputFormat: 'MP4' | 'MOV';
+  renderQuality: 'High' | 'Ultra';
+  creativityLevel: number;
   safetyFilter: 'Strict' | 'Moderate' | 'Off';
-  
-  // Workflow & Automation
   downloadPath: string;
   autoDownload: boolean;
   autoPostTikTok: boolean;
@@ -95,21 +92,9 @@ export interface UserSettings {
 
 export interface UserProfile {
   name: string;
-  plan: 'Free' | 'Pro' | 'Enterprise';
+  plan: 'Miễn phí' | 'Cá nhân' | 'Doanh nghiệp';
   avatar: string;
   email: string;
-}
-
-export type BatchTemplateId = 'gameplay_split' | 'fake_podcast' | 'cinematic_story' | 'news_flash';
-
-export interface BatchJob {
-  id: string;
-  name: string;
-  totalVideos: number;
-  processedVideos: number;
-  status: 'Queued' | 'Processing' | 'Paused' | 'Completed';
-  engine: 'Veo3' | 'Sora2' | 'KlingAI' | 'Grok';
-  template?: BatchTemplateId;
 }
 
 export interface StudioContextType {

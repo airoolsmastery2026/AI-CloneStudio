@@ -1,5 +1,5 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
 import { StudioContextType, VideoProject, Notification, UserSettings, ProjectStatus, UserProfile, BatchJob, BatchTemplateId } from '../types';
 
 const defaultSettings: UserSettings = {
@@ -50,10 +50,10 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [user, setUser] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('studio_user');
     return saved ? JSON.parse(saved) : {
-      name: 'Professional Creator',
-      plan: 'Pro',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Studio',
-      email: 'creator@studio.ai'
+      name: 'Nhà sáng tạo AI',
+      plan: 'Cá nhân',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Production',
+      email: 'alex@studio.ai'
     };
   });
 
@@ -67,7 +67,6 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => { localStorage.setItem('studio_projects', JSON.stringify(projects)); }, [projects]);
   useEffect(() => { localStorage.setItem('studio_settings', JSON.stringify(settings)); }, [settings]);
   useEffect(() => { localStorage.setItem('studio_credits', userCredits.toString()); }, [userCredits]);
-  useEffect(() => { localStorage.setItem('studio_user', JSON.stringify(user)); }, [user]);
   useEffect(() => { localStorage.setItem('studio_batches', JSON.stringify(batches)); }, [batches]);
 
   const addNotification = (notif: Omit<Notification, 'id' | 'read'>) => {
@@ -76,66 +75,73 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const removeNotification = (id: string) => setNotifications(prev => prev.filter(n => n.id !== id));
-
   const addProject = (project: VideoProject) => setProjects(prev => [project, ...prev]);
-
   const updateProject = (id: string, updates: Partial<VideoProject>) => {
     setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   };
-
   const deductCredits = (amount: number) => setUserCredits(prev => Math.max(0, prev - amount));
 
-  const addBatch = (name: string, count: number, engine: any, template: BatchTemplateId = 'cinematic_story') => {
-    const newBatch: BatchJob = {
-      id: Date.now().toString(),
-      name,
-      totalVideos: count,
-      processedVideos: 0,
-      status: 'Processing',
-      engine,
-      template
-    };
-    setBatches(prev => [newBatch, ...prev]);
-  };
+  useEffect(() => {
+    const batchWorker = setInterval(() => {
+      setBatches(prevBatches => {
+        let spawnedProjects: VideoProject[] = [];
+        // Fix: Explicitly type 'updated' as BatchJob[] to prevent status string widening issues
+        const updated: BatchJob[] = prevBatches.map(batch => {
+          if (batch.status === 'Đang xử lý' && batch.processedVideos < batch.totalVideos) {
+            if (Math.random() > 0.6) {
+              const videoNum = batch.processedVideos + 1;
+              const isLast = videoNum === batch.totalVideos;
+              
+              spawnedProjects.push({
+                id: `batch-${batch.id}-${videoNum}`,
+                title: `${batch.name} #${videoNum}`,
+                thumbnail: `https://picsum.photos/400/225?random=${batch.id}${videoNum}`,
+                status: ProjectStatus.GENERATING,
+                progress: 0,
+                engine: batch.engine,
+                date: 'Vừa xong',
+                duration: '0:15',
+                targetLanguage: 'Tiếng Việt'
+              });
 
-  const toggleBatchStatus = (id: string) => {
-    setBatches(prev => prev.map(b => b.id === id ? { ...b, status: b.status === 'Processing' ? 'Paused' : 'Processing' } : b));
-  };
+              return { ...batch, processedVideos: videoNum, status: isLast ? 'Đã hoàn thành' : 'Đang xử lý' };
+            }
+          }
+          return batch;
+        });
 
-  const removeBatch = (id: string) => setBatches(prev => prev.filter(b => b.id !== id));
+        if (spawnedProjects.length > 0) {
+          setProjects(prev => [...spawnedProjects, ...prev]);
+          addNotification({ title: 'Tiến độ Sản xuất', message: `Đã triển khai ${spawnedProjects.length} video mới vào dây chuyền.`, type: 'info', time: 'Bây giờ' });
+        }
+        return updated;
+      });
+    }, 4000);
+    return () => clearInterval(batchWorker);
+  }, []);
 
-  // Logic Render Video thực tế (Giả lập tích hợp Veo API)
   useEffect(() => {
     const renderWorker = setInterval(() => {
       setProjects(prev => {
-        let hasChanges = false;
+        let changed = false;
         const next = prev.map(p => {
           if (p.status === ProjectStatus.GENERATING) {
-            hasChanges = true;
-            const newProgress = Math.min(100, p.progress + (Math.random() * 5 + 2));
+            changed = true;
+            const increment = Math.random() * 8 + 2;
+            const newProgress = Math.min(100, p.progress + increment);
             const isDone = newProgress >= 100;
-            
+
             if (isDone) {
-              addNotification({
-                title: 'Render Complete',
-                message: `Video "${p.title}" is ready.`,
-                type: 'success',
-                time: 'Just now'
-              });
+              addNotification({ title: 'Video Đã Sẵn Sàng', message: `"${p.title}" đã kết xuất xong.`, type: 'success', time: 'Bây giờ' });
             }
 
-            return {
-              ...p,
-              progress: Math.floor(newProgress),
-              status: isDone ? ProjectStatus.COMPLETED : ProjectStatus.GENERATING,
-              videoUrl: isDone ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' : p.videoUrl
-            };
+            return { ...p, progress: Math.floor(newProgress), status: isDone ? ProjectStatus.COMPLETED : ProjectStatus.GENERATING, videoUrl: isDone ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' : undefined };
           }
           return p;
         });
-        return hasChanges ? next : prev;
+        return changed ? next : prev;
       });
-    }, 3000);
+    }, 2500);
     return () => clearInterval(renderWorker);
   }, []);
 
@@ -144,7 +150,15 @@ export const StudioProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       projects, addProject, updateProject, notifications, addNotification, removeNotification,
       settings, updateSettings: (s) => setSettings(prev => ({ ...prev, ...s })),
       userCredits, deductCredits, user, updateUser: (u) => setUser(prev => ({ ...prev, ...u })),
-      batches, addBatch, toggleBatchStatus, removeBatch,
+      batches, 
+      addBatch: (name: string, count: number, engine: any, template: BatchTemplateId = 'cinematic_story') => {
+        const newBatch: BatchJob = { id: Date.now().toString(), name, totalVideos: count, processedVideos: 0, status: 'Đang xử lý', engine: engine as any, template };
+        setBatches(prev => [newBatch, ...prev]);
+        addNotification({ title: 'Bắt đầu Mẻ Mới', message: `Dây chuyền "${name}" hiện đã hoạt động.`, type: 'process', time: 'Bây giờ' });
+      },
+      // Fix: Use explicit type assertion for status literal to satisfy BatchJob interface
+      toggleBatchStatus: (id) => setBatches(prev => prev.map(b => b.id === id ? { ...b, status: (b.status === 'Đang xử lý' ? 'Đã tạm dừng' : 'Đang xử lý') as 'Đang xử lý' | 'Đã tạm dừng' } : b)),
+      removeBatch: (id) => setBatches(prev => prev.filter(b => b.id !== id)),
       activeVideoId, playVideo: (id) => setActiveVideoId(id), closeVideo: () => setActiveVideoId(null)
     }}>
       {children}
